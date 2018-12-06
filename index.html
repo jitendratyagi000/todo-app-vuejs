@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Simple TODO App</title>
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+      <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js"></script>
+      <style type="text/css">
+         .editable {
+         resize: both;
+         border: 1px solid gray;
+         border-radius: 5px;
+         padding: 5px;
+         }
+         .line-through {
+         text-decoration: line-through;
+         }
+      </style>
+   </head>
+   <body>
+      <div class="container">
+         <div class="row justify-content-center">
+            <div class="col-lg-10 text-black text-center">
+               <h1 class="font-weight-light">Simple TODO App</h1>
+            </div>
+         </div>
+         <div class="row">
+            <div class="card col-md-4">
+               <div class="card-body">
+                  <h5 class="card-title">Add Item</h5>
+                  <form @submit.prevent="onSubmit">
+                     <div class="form-group">
+                        <input type="text" v-model="todoName" class="form-control" placeholder="Enter Item Name">
+                     </div>
+                     <button type="submit" class="btn btn-primary">Submit</button>
+                  </form>
+               </div>
+            </div>
+            <div class="col-md-8">
+               <div class="card">
+                  <div class="card-header">TODO</div>
+                  <div class="card-body">
+                     <todo-list :todos="uncompletedTodos"
+                        @on-name-update="updateName"
+                        @on-delete="deleteTodo">
+                     </todoList>
+                  </div>
+               </div>
+               <div class="card">
+                  <div class="card-header">COMPLETED</div>
+                  <div class="card-body">
+                     <todo-list :todos="completedTodos" 
+                        @on-name-update="updateName" 
+                        @on-delete="deleteTodo">
+                     </todoList>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <script>
+         Vue.component('todo-list', {
+         	props: ['todos'],
+         	data() {
+         		return {}
+         	},
+         	template: `
+         	<div>
+         		<ul class="list-group" v-for="(todo, index) in todos" :key="index">
+         			<li class="list-group-item">
+         				<div class="row">
+         					<div class="col-md-9">
+         					<div class="row"> 
+         						<input class="col-md-1" type="checkbox" :checked="todo.complete" @click="todo.complete = !todo.complete">
+         					    <span class="col-md-11" :class="{editable: todo.editable, 'line-through': todo.complete && !todo.editable}" :contenteditable="todo.editable" @blur="updateName(todo.id, $event)" @keydown.prevent.enter>{{todo.name}}</span>
+         					    </div>
+         				    </div>
+         				    <div class="col-md-3">
+         				    	<button type="button" class="btn btn-secondary btn-sm" v-show="!todo.editable" @click="todo.editable = true">Edit</button>
+         				    	<button type="button" class="btn btn-primary btn-sm" v-show="todo.editable" @click="todo.editable = false">Save</button>
+         				    	<button type="button" class="btn btn-danger btn-sm danger" @click="deleteTodo(todo.id)">Delete</button>
+         				    </div>
+         			    </div>
+         			</li>
+         		</ul>
+         		<span v-if="todos.length === 0">Nothing to show!!</span>
+         	</div>`,
+         	methods: {
+         		updateName(id, event) {
+         			this.$emit('on-name-update', {id, name: event.target.innerText})
+         		},
+         		deleteTodo(id) {
+         			this.$emit('on-delete', id);
+         		}
+         	}
+         });
+         
+         
+         const vm = new Vue({
+         	el: ".container",
+         	data: {
+         		todoName: "",
+         		uniqueId: 0,
+         		todos: []
+         	},
+         	methods: {
+         		onSubmit() {
+         			this.todos.push({
+         				id: ++this.uniqueId,
+         				name: this.todoName,
+         				complete: false,
+         				editable: false
+         			});
+         			this.todoName = "";
+         		},
+         		updateName(todoObj) {
+         			const index = this.getIndexAccordingToId(todoObj.id);
+         			this.todos[index].name = todoObj.name;
+         		},
+         		deleteTodo(id) {
+         			const index = this.getIndexAccordingToId(id);
+         			this.todos.splice(index, 1);
+         		},
+         		getIndexAccordingToId(id) {
+         			return this.todos.findIndex(todo => todo.id == id)
+         		}
+         	},
+         	computed: {
+         		completedTodos() {
+         			return this.todos.filter(todo => todo.complete)
+         		},
+         		uncompletedTodos() {
+         			return this.todos.filter(todo => !todo.complete)
+         		}
+         	}
+         });
+      </script>
+   </body>
+</html>
